@@ -86,25 +86,21 @@ import pandas as pd
 #instances of this class are passed to methods to analyze the distribution of those motifs on genomic sequences
 
 class Sequence_motif:
-  def __init__(self, sequence, function):
+  def __init__(self, sequence):
     self.sequence = sequence.upper()
-    self.function = function
 
   #takes in input a sequence, finds distribution of motif in that sequence, useful to interact with analyzer class
-  def motif_distribution(self,DNA:str):
-    count_motif = DNA.count(self.sequence)
-    sequence = DNA.upper()
-    count = 0
-    list_positions = []
-    while count<count_motif:
-      index = DNA.find(self.sequence)+1        #index of first occurrence of motif
-      list_positions.append(index)
-      sequence = "U" + sequence[index+1:]           #U is a random character that cannot occur in motifs as we are dealing with DNA
-      count= count+1
-    updated_positions = [list_positions[0]]
-    for i in range(1,len(list_positions)):
-      updated_positions.append(list_positions[i]+list_positions[i-1])
-    return updated_positions
+  def motif_distribution(self, DNA: str):
+        DNA = DNA.upper()
+        list_positions = []
+        index = 0
+        while True:
+            index = DNA.find(self.sequence, index)
+            if index == -1:
+                break
+            list_positions.append(index)
+            index += 1
+        return [int(list_positions[i]+1) for i in range(len(list_positions))]
 
 
 class Analyzer:
@@ -139,6 +135,7 @@ class Analyzer:
   @staticmethod
   def align(seq1, seq2,gap_penalty=-2,match_score=+1,mismatch_score=-1):
     import numpy as np
+    seq2 = seq2.upper()
     m = len(seq1)
     n = len(seq2)
     score_matrix = np.zeros((m+1,n+1),dtype=int)
@@ -198,16 +195,15 @@ class Analyzer:
 
 
   def motifs_analysis(self, *args : Sequence_motif):          #given a sequence and an arbitrary set of Sequence_motif instances creates a dataFrame containing the motif and some important properties
-    motifs_dict = {"Motif":[],"Count":[],"Function":[],"Starting position": []}
+    motifs_dict = {"Motif":[],"Count":[],"Starting position": []}
     for Sequence_motif in args:
-      if Sequence_motif not in motifs_dict["Motif"] and Sequence_motif in self.sequence:
+      if Sequence_motif.sequence not in motifs_dict["Motif"] and Sequence_motif.sequence in self.sequence:
         motifs_dict["Motif"].append(Sequence_motif.sequence)
         motifs_dict["Count"].append(self.sequence.count(Sequence_motif.sequence))
-        motifs_dict["Function"].append(Sequence_motif.function)
         motifs_dict["Starting position"].append(Sequence_motif.motif_distribution(self.sequence))   #starting positions of motifs in the DNA sequence passed to analyzer class
       else:
         raise ValueError("the motif:", Sequence_motif.sequence,"is not in the analyzed DNA sequence")
-    motifs_dataframe = pd.DataFrame(motifs_dict, columns= ["Motif","Count","Function","Starting position"])
+    motifs_dataframe = pd.DataFrame(motifs_dict, columns= ["Motif","Count","Starting position"])
     return motifs_dataframe
 
   @staticmethod

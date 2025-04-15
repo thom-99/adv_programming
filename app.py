@@ -2,7 +2,6 @@ import streamlit as st
 from PIL import Image 
 from pathlib import Path
 import faster 
-import functions
 
 
 image = Image.open('images/mitochondria-1.jpg')
@@ -58,6 +57,12 @@ if uploaded_file is not None:
 
         #search genomic motifs in the sequence 
         if st.checkbox('search for genomic motifs'):
-            motif = st.text_input('type the genomic motif','...')
-
+            motifs = st.text_input('type the genomic motifs separated by a whitespace')
+            motifs_list = motifs.split(' ')
+            #creating a list of sequence motif objects
+            motifs_obj = [faster.Sequence_motif(x) for x in motifs_list]
+            #class method call
+            df = analyzer.motifs_analysis(*motifs_obj)
+            st.text('motifs search results')
+            st.dataframe(df)
 
