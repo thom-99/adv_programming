@@ -2,6 +2,7 @@ import streamlit as st
 from PIL import Image 
 from pathlib import Path
 import faster 
+import numpy as np
 
 
 image = Image.open('images/mitochondria-1.jpg')

@@ -131,66 +131,75 @@ class Analyzer:
     return reversecomp[::-1]
 
   #aligns the two sequences with needleman and wunsch and returns the alignment
-  #NOTE, non vi preoccupate per match_score, mismatch_score etc, teniamoli di default
   @staticmethod
-  def align(seq1, seq2,gap_penalty=-2,match_score=+1,mismatch_score=-1):
+  def align(seq1, seq2, gap_penalty=-2, match_score=2, mismatch_score=-2):
     import numpy as np
-    seq2 = seq2.upper()
+  #matrix dimension
+
     m = len(seq1)
     n = len(seq2)
-    score_matrix = np.zeros((m+1,n+1),dtype=int)
-    traceback = np.zeros((m+1,n+1),dtype=str)
-    traceback[0][0] = None
-    #initialization of the matrix
-    for i in range(1,m+1):
-      score_matrix[i][0] = i*gap_penalty
-      traceback[i][0] = "up"
-    for j in range(1,n+1):
-      score_matrix[0][j] = j*gap_penalty
-      traceback[0][j] = "down"
-      #fill the matrix
-    for i in range(1,m+1):
-      for j in range(1,n+1):
+    score_matrix = np.zeros((m+1, n+1), dtype=int)
+    traceback_matrix = np.zeros((m+1, n+1), dtype=str)
+    max_score=0
+    max_position=(0,0)
+
+    #initialize the score matrix
+    for i in range(m+1):
+      score_matrix[i,0]= gap_penalty*i
+      traceback_matrix[i,0] = "u"  #the matrix gives back "u" when there is a gap in seq2
+    for j in range(n+1):
+      score_matrix[0,j]= gap_penalty*j
+      traceback_matrix[0,j]= "l" #the matrix gives back "l" when there is a gap in seq1
+    traceback_matrix[0,0] = None  #start position
+                                  #"u" stands for up, "l" stands for left, "d" stands for diagonal
+
+    #fill the score matrix
+
+    for i in range(1, m+1):
+      for j in range(1, n+1):
         if seq1[i-1] == seq2[j-1]:
-          score_diag = score_matrix[i-1][j-1] + match_score
+          diag = score_matrix[i-1][j-1] + match_score
         else:
-          score_diag = score_matrix[i-1][j-1] + mismatch_score       #score for diagonal movement
-        score_left = score_matrix[i][j-1] + gap_penalty      #changes only the column not the row
-        score_up = score_matrix[i-1][j]  + gap_penalty     #changes only the row not the column
-        scores = (score_diag, score_left, score_up)
-        score_matrix[i][j] = max(scores)
+          diag = score_matrix[i-1][j-1] + mismatch_score
 
-        if score_matrix[i][j] == score_diag:
-          traceback[i][j] = "diag"
-        if score_matrix[i][j] == score_up:
-          traceback[i][j] = "up"
-        if score_matrix[i][j] == score_left:
-          traceback[i][j] = "left"
+        up = score_matrix[i-1][j] + gap_penalty  # gap in seq2
+        left = score_matrix[i][j-1] + gap_penalty  # gap in seq1
 
-    alignment_score = score_matrix[m][n]
-    #now we need to compute the alignment using the traceback matrix
+        score_matrix[i][j]=max(0, diag, up, left)
+
+        if score_matrix[i][j]>=max_score:
+          max_score = score_matrix[i][j]
+          max_position = (i,j)
+
+
+        #direction of the traceback matrix
+        if score_matrix[i][j]== 0:
+          traceback_matrix[i][j]= None
+        elif score_matrix[i][j] == diag:
+          traceback_matrix[i][j] = 'd'  #match or a mismatch in the sequence
+        elif score_matrix[i][j] == up:
+          traceback_matrix[i][j] = 'u'    #gap in seq2
+        else:
+          traceback_matrix[i][j] = 'l'  #gap in seq1
+
     aligned_seq1 = ""
     aligned_seq2 = ""
-    i = len(seq1)
-    j = len(seq2)
-    gap = "-"
-    while i>0 and j>0 :
-      if traceback[i][j] == "d":
-        aligned_seq1 = seq1[i-1] + aligned_seq1          #diagonal movement, added a character to both sequences
+    i, j = max_position
+    while i > 0 and j > 0 and score_matrix[i][j]>0:
+      if traceback_matrix[i][j] == "d":
+        aligned_seq1 = seq1[i-1] + aligned_seq1
         aligned_seq2 = seq2[j-1] + aligned_seq2
-        i=i-1
-        j=j-1
-      elif traceback[i][j] == "l":                           #movement on the left, gap on rows sequence, added a character only for columns sequence
-        aligned_seq1 = gap + aligned_seq1
+        i = i-1
+        j = j-1
+      elif traceback_matrix[i][j] == "u":
+        aligned_seq1 = seq1[i-1] + aligned_seq1
+        aligned_seq2 = "-" + aligned_seq2
+        i = i-1
+      elif traceback_matrix[i][j] == "l":
+        aligned_seq1 = "-" + aligned_seq1
         aligned_seq2 = seq2[j-1] + aligned_seq2
         j = j-1
-      elif traceback[i][j] == "u":
-        aligned_seq1 = seq1[i-1] + aligned_seq1
-        aligned_seq2 = gap + aligned_seq2
-        i=i-1
-    print("The score of the alignment is:", alignment_score )
-    print(aligned_seq1)
-    print(aligned_seq2)
+
     return aligned_seq1, aligned_seq2
 
 
