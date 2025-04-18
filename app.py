@@ -2,7 +2,6 @@ import streamlit as st
 from PIL import Image 
 from pathlib import Path
 import faster 
-import numpy as np
 
 
 image = Image.open('images/mitochondria-1.jpg')
@@ -11,7 +10,7 @@ st.image(image)
 
 st.title("""Mitochondrial DNA Analyzer""")
 st.markdown("tool developed by **Thom**, **Ale**, **Matteo** and **Fabio**")
-st.markdown("the [source code]() of the project is available on github")
+st.markdown("the [source code](https://github.com/thom-99/adv_programming/tree/main) of the project is available on github")
 
 
 
@@ -51,9 +50,19 @@ if uploaded_file is not None:
         #alignment with another sequence
         if st.checkbox('perform alignment'):
             sequence2 = st.text_input('align the sequence with a new given one')
-            st.text('below the local alignment of the two sequences is shown')
-            st.text(f'{analyzer.align(sequence, sequence2)[0]}')
-            st.text(f'{analyzer.align(sequence, sequence2)[1]}')
+            if sequence2:
+                st.text('below the local alignment of the two sequences is shown')
+                st.text(sequence)
+                aligned_seq1, aligned_seq2, score = analyzer.align(sequence, sequence2)
+                match_line= ""
+                for a, b in zip(aligned_seq1, aligned_seq2):
+                    if a == b:
+                        match_line += "|"
+                    else:
+                        match_line += " "
+                alignment_block = f"{aligned_seq1}\n{match_line}\n{aligned_seq2}"
+                st.code(alignment_block, language="text")
+                st.markdown(f"**Alignment score:** `{score}`")
 
 
         #search genomic motifs in the sequence 

@@ -200,7 +200,7 @@ class Analyzer:
         aligned_seq2 = seq2[j-1] + aligned_seq2
         j = j-1
 
-    return aligned_seq1, aligned_seq2
+    return aligned_seq1, aligned_seq2, score_matrix[max_position]
 
 
   def motifs_analysis(self, *args : Sequence_motif):          #given a sequence and an arbitrary set of Sequence_motif instances creates a dataFrame containing the motif and some important properties
